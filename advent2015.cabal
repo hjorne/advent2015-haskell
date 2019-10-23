@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 80321f9e954b6519aa3cb184a8c1dac5dd3f55736420299fdb5051678fae3fd0
+-- hash: 358e50895c5aff56091667811c36973c8c5f2553e0556b7abfce162fc388bded
 
 name:           advent2015
 version:        0.1.0.0
@@ -31,13 +31,16 @@ library
       Day1
       Day2
       Day3
+      Day4
   other-modules:
       Paths_advent2015
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , bytestring
     , containers
+    , pureMD5
   default-language: Haskell2010
 
 executable advent2015-exe
@@ -50,5 +53,7 @@ executable advent2015-exe
   build-depends:
       advent2015
     , base >=4.7 && <5
+    , bytestring
     , containers
+    , pureMD5
   default-language: Haskell2010

@@ -1,4 +1,4 @@
-module Day3 where
+module Day3 (day3) where
 
 import qualified Data.Set as S
 import Prelude hiding (Left, Right)
