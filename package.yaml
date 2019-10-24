@@ -24,6 +24,7 @@ dependencies:
 - containers
 - pureMD5
 - bytestring
+- binary
 
 library:
   source-dirs: src
