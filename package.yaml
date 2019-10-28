@@ -25,6 +25,11 @@ dependencies:
 - pureMD5
 - bytestring
 - binary
+- vector
+- data-partition
+- primitive
+- array
+# - data-partition >= 0.3.0.0
 
 library:
   source-dirs: src
