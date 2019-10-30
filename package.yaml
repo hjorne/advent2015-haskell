@@ -29,7 +29,8 @@ dependencies:
 - data-partition
 - primitive
 - array
-# - data-partition >= 0.3.0.0
+- trifecta
+- parsers
 
 library:
   source-dirs: src

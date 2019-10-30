@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 081cd6a9828fc0fde2a1434d2eccde1f06fe592c8ffe48ba78ac8957d7c50a81
+-- hash: 72769fb4ac40d59b880e1869e62606e320942333418da4326bb43beda1dc3ee3
 
 name:           advent2015
 version:        0.1.0.0
@@ -34,7 +34,7 @@ library
       Day4
       Day5
       Day6
-      Vec2D
+      Day7
   other-modules:
       Paths_advent2015
   hs-source-dirs:
@@ -46,8 +46,10 @@ library
     , bytestring
     , containers
     , data-partition
+    , parsers
     , primitive
     , pureMD5
+    , trifecta
     , vector
   default-language: Haskell2010
 
@@ -66,7 +68,9 @@ executable advent2015-exe
     , bytestring
     , containers
     , data-partition
+    , parsers
     , primitive
     , pureMD5
+    , trifecta
     , vector
   default-language: Haskell2010
