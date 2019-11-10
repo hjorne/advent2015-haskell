@@ -4,6 +4,8 @@ import Control.Applicative
 import Control.Monad.ST
 import Data.Array.Unboxed
 import Data.Ix
+import Data.Foldable (for_, traverse_)
+import qualified Data.Array (elems)
 import qualified Data.Array.ST as A
 import qualified Data.Array.MArray as MA
 import Text.Trifecta
@@ -22,28 +24,33 @@ type MArray s = A.STUArray s Location Int
 bound :: Int
 bound = 999
 
-explodeOperations :: [Operation] -> [Executable]
-explodeOperations = foldr go []
-    where go op acc = 
-            explodeOperation op ++ acc
-                    
-explodeOperation :: Operation -> [Executable]
-explodeOperation (Toggle r1 r2) = fmap (\pos -> Executable pos ((-) 1)) $ range (r1, r2)
-explodeOperation (On r1 r2) = fmap (\pos -> Executable pos (const 1)) $ range (r1, r2)
-explodeOperation (Off r1 r2) = fmap (\pos -> Executable pos (const 0)) $ range (r1, r2)
 
--- generateArray :: [Operation] -> UArray Location Int
--- generateArray ops = A.runSTUArray $ do
---     arr <- MA.newArray ((0, 0), (bound, bound)) 0
---     foldr go (pure ()) $ explodeOperations ops
---     fmap 
---     pure arr
---     where go exe _ = modifyArray arr exe
+executeOperationP1 :: MArray s -> Operation -> ST s ()
+executeOperationP1 arr (Toggle r1 r2) = execute arr (r1, r2) (1-)
+executeOperationP1 arr (On r1 r2) = execute arr (r1, r2) (const 1)
+executeOperationP1 arr (Off r1 r2) = execute arr (r1, r2) (const 0)
 
-modifyArray :: MArray s -> Executable -> ST s ()
-modifyArray arr (Executable r f) = do
-    el <- MA.readArray arr r
-    MA.writeArray arr r (f el)
+execute :: MArray s -> (Location, Location) -> (Int -> Int) -> ST s ()
+execute arr (r1, r2) f = 
+    for_ (range (r1, r2)) (\r -> MA.readArray arr r >>=
+                           \x -> MA.writeArray arr r (f x))
+
+executeOperationP2 :: MArray s -> Operation -> ST s ()
+executeOperationP2 arr (Toggle r1 r2) = execute arr (r1, r2) (+2)
+executeOperationP2 arr (On r1 r2) = execute arr (r1, r2) (+1)
+executeOperationP2 arr (Off r1 r2) = execute arr (r1, r2) (\x -> max (x - 1) 0)
+
+generateArray1 :: [Operation] -> UArray Location Int
+generateArray1 ops = A.runSTUArray $ do
+    arr <- MA.newArray ((0, 0), (bound, bound)) 0 
+    traverse_ (executeOperationP1 arr) ops
+    return arr
+
+generateArray2 :: [Operation] -> UArray Location Int
+generateArray2 ops = A.runSTUArray $ do
+    arr <- MA.newArray ((0, 0), (bound, bound)) 0 
+    traverse_ (executeOperationP2 arr) ops
+    return arr
 
 tupleParse :: Parser Location
 tupleParse = do
@@ -51,7 +58,7 @@ tupleParse = do
     x <- fromIntegral <$> integer
     char ','
     y <- fromIntegral <$> integer
-    pure $ (x, y)
+    pure (x, y)
 
 parse :: Parser [Operation]
 parse = some $ token $ do
@@ -63,8 +70,18 @@ parse = some $ token $ do
               "turn off" -> Off r1 r2
               "turn on" -> On r1 r2
 
-input :: IO (Maybe [Operation])
-input = parseFromFile parse "input/day6.txt" 
+ioinput :: IO (Maybe [Operation])
+ioinput = parseFromFile parse "input/day6.txt" 
+
+part1 :: [Operation] -> Int
+part1 ops = sum . elems $ generateArray1 ops
+
+part2 :: [Operation] -> Int
+part2 ops = sum . elems $ generateArray2 ops
 
 day6 :: IO ()
-day6 = input >>= print
+day6 = do
+    input <- ioinput
+    -- print $ part1 <$> input
+    print $ part2 <$> input
+    return ()

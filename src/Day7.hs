@@ -1,3 +1,6 @@
+{-# LANGUAGE Strict #-}
+{-# LANGUAGE StrictData #-}
+
 module Day7 where
 
 import Control.Applicative
@@ -32,28 +35,14 @@ data Operand =
     | Identifier ID
     deriving (Eq, Show)
 
-
--- dfs :: Graph -> Set ID -> [ID] -> ID -> [ID]
--- dfs _ visited tsort node | S.member node visited = tsort
--- dfs g visited tsort node | trace ("Visited: " ++ show visited ++ " node: " ++ show node ++ " tsort: " ++ show tsort) S.member node visited = tsort
--- dfs g visited tsort node = neighbors >>= \n -> dfs g visited' (n:tsort) n
---     where (Node _ neighbors _) = g ! node
---           visited' = S.insert node visited
-
-dfs :: Graph -> Set ID -> [ID] -> ID -> [ID]
-dfs g visited tsort node | trace ("Visited: " ++ show visited ++ " node: " ++ show node ++ " tsort: " ++ show tsort ++ "\n") False = undefined
-dfs _ visited _ node | S.member node visited = [node]
-dfs g _ _ node | trace ("dfs neighbors " ++ show neighbors) False = undefined
-    where (Node _ neighbors _) = g ! node
-
-dfs g visited tsort node = 
+dfs :: Graph -> [ID] -> ID -> [ID]
+dfs _ tsort node | node `elem` tsort = []
+dfs g tsort node = 
     case neighbors of 
-        [] -> [node]
-        _  -> snd $ foldl' go (visited, tsort) neighbors
+        [] -> node : tsort
+        _  -> foldl' go tsort neighbors
     where Node _ neighbors _ = g ! node
-          go _ node | trace ("go node " ++ show node) False = undefined
-          go (visited, tsort) node = (visited', dfs g visited' [] node ++ tsort)
-            where visited' = S.insert node visited
+          go tsort node = node : dfs g tsort node
 
 
 nodeMap :: [Node] -> Graph
@@ -101,5 +90,5 @@ day7 :: IO ()
 day7 = do 
     g <- parseFromFile parse "input/day7.txt" 
     print $ M.elems $ fromJust g
-    -- print $ dfs (fromJust g) S.empty ["q"] "q"
+    print $ reverse $ dfs (fromJust g) [] "q"
     return ()

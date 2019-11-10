@@ -5,5 +5,5 @@ x OR y -> e
 x LSHIFT 2 -> f
 y RSHIFT 2 -> g
 NOT x -> h
-NOT f -> i
-y OR i -> q
+g OR f -> i
+g OR i -> q
