@@ -1,6 +1,3 @@
-{-# LANGUAGE Strict #-}
-{-# LANGUAGE StrictData #-}
-
 module Day7 where
 
 import Control.Applicative
@@ -25,6 +22,7 @@ data OpCode =
     deriving (Eq, Show)
 
 data Node = Node ID [ID] OpCode deriving (Eq, Show)
+data Tree a = Tree a [Tree a] deriving (Eq, Show)
 
 type Graph = Map ID Node
 
@@ -35,23 +33,34 @@ data Operand =
     | Identifier ID
     deriving (Eq, Show)
 
-dfs :: Graph -> [ID] -> ID -> [ID]
-dfs _ tsort node | node `elem` tsort = []
-dfs g tsort node = 
-    case neighbors of 
-        [] -> node : tsort
-        _  -> foldl' go tsort neighbors
-    where Node _ neighbors _ = g ! node
-          go tsort node = node : dfs g tsort node
+generate :: Graph -> ID -> Tree ID
+generate g v = Tree v (generate g <$> neighbors)
+    where Node _ neighbors _ = g ! v
 
+chop :: Tree ID -> Tree ID
+chop t = head . snd $ chopF S.empty [t]
+
+chopF :: Set ID -> [Tree ID] -> (Set ID, [Tree ID])
+chopF visited [] = (visited, [])
+-- A kind of backtracking? Probably pretty similar to others of its nature
+chopF visited (Tree v _:us) | S.member v visited = chopF visited us
+chopF visited (Tree v ts:us) = (v''', newT:chopright)
+    where v' = S.insert v visited
+          (v'', chopleft) = chopF v' ts
+          (v''', chopright) = chopF v'' us
+          newT = Tree v chopleft
+
+dfs :: Graph -> ID -> Tree ID
+dfs g v = chop $ generate g v
+
+postorder :: Tree ID -> [ID]
+postorder (Tree v []) = [v]
+postorder (Tree v xs) = (xs >>= postorder) ++ [v]
 
 nodeMap :: [Node] -> Graph
 nodeMap xs = M.fromList $ zip (getID <$> xs) xs
     where getID (Node i _ _ ) = i
 
--- This parseOperand has a side effect! I'm just applying a function to it
--- but this is what is meant by an effect or side effect. It's technically pure
--- but the effect is outside of the immediate obvious scope
 parseInfix :: (Operand -> Operand -> OpCode) -> String -> Parser OpCode
 parseInfix con op = try $ mk <$> parseOperand <*> pad op <*> token parseOperand
     where mk o1 _ o2 = con o1 o2
@@ -89,6 +98,5 @@ parse = nodeMap <$> many (token parseNode)
 day7 :: IO ()
 day7 = do 
     g <- parseFromFile parse "input/day7.txt" 
-    print $ M.elems $ fromJust g
-    print $ reverse $ dfs (fromJust g) [] "q"
-    return ()
+    let g' = fromJust g
+    print $ postorder $ dfs g' "a"

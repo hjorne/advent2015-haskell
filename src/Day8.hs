@@ -48,7 +48,6 @@ part1 = parseFromFile manyStr infile >>=
     \naiveCount -> 
     print $ (-) <$> pure naiveCount <*> properCount
 
-
 part2 :: IO ()
 part2 = 
     readFile infile >>=
