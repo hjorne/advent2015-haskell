@@ -1,4 +1,4 @@
-module Day6 where
+module Day6 (day6) where
 
 import Control.Applicative
 import Control.Monad.ST

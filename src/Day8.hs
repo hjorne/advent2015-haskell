@@ -1,4 +1,4 @@
-module Day8 where
+module Day8 (day8) where
 
 import Text.Trifecta
 import Control.Applicative

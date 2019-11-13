@@ -1,4 +1,4 @@
-module Day9 where
+module Day9 (day9) where
 
 import Text.Trifecta
 import Data.Maybe (fromJust)
