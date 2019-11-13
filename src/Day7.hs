@@ -29,7 +29,7 @@ type Graph = Map ID Node
 type ID = String
 
 data Operand =
-      Literal Integer
+      Literal Int
     | Identifier ID
     deriving (Eq, Show)
 
@@ -56,6 +56,28 @@ dfs g v = chop $ generate g v
 postorder :: Tree ID -> [ID]
 postorder (Tree v []) = [v]
 postorder (Tree v xs) = (xs >>= postorder) ++ [v]
+
+evalOperand :: Operand -> Map ID Int -> Int
+evalOperand (Literal i) _ = i
+evalOperand (Identifier i) m = m ! i 
+
+evalOpCode :: OpCode -> Map ID Int -> Int
+evalOpCode (Not op) m = complement $ evalOperand op m
+evalOpCode (Or op1 op2) m = evalOperand op1 m .|. evalOperand op2 m
+evalOpCode (And op1 op2) m = evalOperand op1 m .&. evalOperand op2 m
+evalOpCode (Rshift op1 op2) m = evalOperand op1 m `shiftR` evalOperand op2 m
+evalOpCode (Lshift op1 op2) m = evalOperand op1 m `shiftL` evalOperand op2 m
+evalOpCode (Value op) m = evalOperand op m
+
+evalID :: Graph -> ID -> Map ID Int -> Map ID Int
+evalID g i m = M.insert i v m
+    where (Node ident _ op) = g ! i
+          v = evalOpCode op m
+
+eval :: Graph -> [ID] -> Map ID Int -> Int
+eval g [i] m = evalID g i m ! i
+eval g (i:is) m = eval g is m'
+    where m' = evalID g i m
 
 nodeMap :: [Node] -> Graph
 nodeMap xs = M.fromList $ zip (getID <$> xs) xs
@@ -99,4 +121,8 @@ day7 :: IO ()
 day7 = do 
     g <- parseFromFile parse "input/day7.txt" 
     let g' = fromJust g
-    print $ postorder $ dfs g' "a"
+    let topsort = postorder $ dfs g' "a"
+    let newB = eval g' topsort M.empty
+    print newB
+    let g'' = M.insert "b" (Node "b" [] (Value (Literal newB))) g'
+    print $ eval g'' topsort M.empty
