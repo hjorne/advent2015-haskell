@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: af7e1c0e2f3dcbcb1e597aabd6c7a0a74dc9fcc459b48ee6fe493ef25a4ee377
+-- hash: ed968f6aacac723ee53f980025bc981f1b286f36803f54bc1b5d9547d0aed3ef
 
 name:           advent2015
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Day10
       Day11
       Day12
+      Day14
       Day2
       Day3
       Day4
@@ -52,9 +53,11 @@ library
     , bytestring
     , containers
     , data-partition
+    , heaps
     , parsers
     , primitive
     , pureMD5
+    , scientific
     , text
     , trifecta
     , unordered-containers
@@ -77,9 +80,11 @@ executable advent2015-exe
     , bytestring
     , containers
     , data-partition
+    , heaps
     , parsers
     , primitive
     , pureMD5
+    , scientific
     , text
     , trifecta
     , unordered-containers
