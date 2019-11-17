@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ViewPatterns #-}
 
-module Day12 where
+module Day12 (day12) where
 
 import Data.Maybe (fromJust)
 
