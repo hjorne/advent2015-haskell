@@ -4,9 +4,6 @@
 module Day14 where
 
 import qualified Data.Heap as H
-import Data.Map (Map)
-import qualified Data.Map as M
-import Data.List (maximumBy)
 
 type Name = String
 type Rate = Int
@@ -32,6 +29,16 @@ data Event = Event {
 data EventType = StartMove
                | EndMove
                deriving (Eq, Show)
+
+data DeerState = DeerState {
+    stateDeer :: Deer,
+    statePosition :: Distance,
+    state :: State
+} deriving (Eq, Show)
+
+data State = Resting 
+           | Moving
+           deriving (Eq, Show)
              
 instance Ord Event where
     (Event t1 _ _ _) <= (Event t2 _ _ _) = t1 <= t2
@@ -46,28 +53,13 @@ day14 :: IO ()
 day14 = do 
     file <- readFile infile 
     print $ part1 file
+    print $ part2 file
 
 part1 :: String -> Int
 part1 = getMaxEvent . finish . iterate step . initSim . parseDeers
 
 finish :: [Simulation] -> Simulation
 finish =  head . dropWhile (not . checkFinished)
-
-calculateWinner :: Simulation -> Map Deer Points -> Map Deer Points
-calculateWinner sim = M.adjust (+1) leadDeer 
-    where nextEventTime = eventTime $ H.minimum $ step sim
-          leadDeer = getLeadDeer sim
-
-stepSecond :: Simulation -> Simulation
-stepSecond sim = undefined
-
-moveSecond :: Event -> Event
-moveSecond (Event t r deer EndMove) = Event (t + 1)
-moveSecond (Event t r deer StartMove) = Event (t + 1) r deer StartMove
-          
-getLeadDeer :: Simulation -> Deer
-getLeadDeer = eventDeer . maximumBy furthest . H.toUnsortedList
-    where furthest e1 e2 = compare (eventPosition e1) (eventPosition e2)
 
 getMaxEvent :: Simulation -> Int
 getMaxEvent events = maximum $ eventPosition <$> H.toUnsortedList events
@@ -112,3 +104,18 @@ step :: Simulation -> Simulation
 step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
     where newEvent = move event
 step _ = error "TODO: This should be the end of the simulation"
+
+-- part2 :: String -> Simulation
+part2 = allEvents . parseDeers
+
+-- allEvents :: [Deer] -> [Event]
+allEvents = last . fmap H.minimum . takeWhile (not . checkFinished) . iterate step . initSim
+
+initDeerState :: [Deer] -> [DeerState]
+initDeerState = fmap mkState
+    where mkState deer = DeerState deer 0 Moving
+
+moveState :: DeerState -> DeerState
+moveState dstate@(DeerState _ _ Resting) = dstate
+moveState (DeerState deer pos Moving) = DeerState deer (pos + rate) Moving
+    where rate = deerRate deer
