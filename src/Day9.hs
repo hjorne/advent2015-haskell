@@ -1,9 +1,11 @@
-module Day9 (day9) where
+module Day9 where
 
 import Text.Trifecta
 import Data.Maybe (fromJust)
 import qualified Data.Map as M
 import Data.List (nub)
+import Data.Sequence (Seq)
+import qualified Data.Sequence as S
 
 type ID = String
 type Edge = (ID, ID)
@@ -13,7 +15,7 @@ infile :: String
 infile = "input/day9.txt"
 
 day9 :: IO ()
-day9 = parseFromFile (some parseLine) infile >>= print . permutations . nodes . M.fromList . doubleE . fromJust
+day9 = parseFromFile (some parseLine) infile >>= print . nodes . M.fromList . doubleE . fromJust
 
 parseLine :: Parser (Edge, Integer)
 parseLine = mkEdge <$> parseID <*> symbol "to" <*> parseID <*> symbolic '=' <*> natural
@@ -28,6 +30,15 @@ doubleE = foldr go []
 nodes :: Graph -> [ID]
 nodes = nub . fmap fst . M.keys
 
+prefixes :: [a] -> [(a, [a])]
+prefixes xs = dropcopy <$> zip xs [0..]
+    where dropcopy (x, i) = (x, deleteL i xs)
+
+deleteL :: Int -> [a] -> [a]
+deleteL i xs = left ++ tail right
+    where (left, right) = splitAt i xs
+
 permutations :: [a] -> [[a]]
-permutations [x] = [[x]]
-permutations (x:xs) = (x:) <$> permutations xs
+permutations s = p >>= gen
+    where p = prefixes s
+          gen (pre, suf) = (pre:) <$> permutations suf
