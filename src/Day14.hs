@@ -4,19 +4,30 @@
 module Day14 where
 
 import qualified Data.Heap as H
+import Data.Map (Map)
 import qualified Data.Map as M
+import Data.List (maximumBy)
 
 type Name = String
 type Rate = Int
 type Distance = Int
 type Time = Int
+type Points = Int
 type Simulation = H.Heap Event
 
-data Deer = Deer Name Rate Time Time 
-          deriving (Eq, Show)
-data Event = 
-     Event Time Distance Deer EventType
-     deriving (Eq, Show)
+data Deer = Deer {
+    deerName :: Name,
+    deerRate :: Rate,
+    deerStamina :: Time,
+    deerRest :: Time
+} deriving (Eq, Show, Ord)
+
+data Event = Event {
+    eventTime :: Time,
+    eventPosition :: Distance,
+    eventDeer :: Deer,
+    eventType :: EventType
+} deriving (Eq, Show)
 
 data EventType = StartMove
                | EndMove
@@ -32,7 +43,9 @@ endTime :: Int
 endTime = 2503
 
 day14 :: IO ()
-day14 = readFile infile >>= print . part1
+day14 = do 
+    file <- readFile infile 
+    print $ part1 file
 
 part1 :: String -> Int
 part1 = getMaxEvent . finish . iterate step . initSim . parseDeers
@@ -40,9 +53,24 @@ part1 = getMaxEvent . finish . iterate step . initSim . parseDeers
 finish :: [Simulation] -> Simulation
 finish =  head . dropWhile (not . checkFinished)
 
+calculateWinner :: Simulation -> Map Deer Points -> Map Deer Points
+calculateWinner sim = M.adjust (+1) leadDeer 
+    where nextEventTime = eventTime $ H.minimum $ step sim
+          leadDeer = getLeadDeer sim
+
+stepSecond :: Simulation -> Simulation
+stepSecond sim = undefined
+
+moveSecond :: Event -> Event
+moveSecond (Event t r deer EndMove) = Event (t + 1)
+moveSecond (Event t r deer StartMove) = Event (t + 1) r deer StartMove
+          
+getLeadDeer :: Simulation -> Deer
+getLeadDeer = eventDeer . maximumBy furthest . H.toUnsortedList
+    where furthest e1 e2 = compare (eventPosition e1) (eventPosition e2)
+
 getMaxEvent :: Simulation -> Int
-getMaxEvent events = maximum $ pull <$> H.toUnsortedList events
-    where pull (Event _ d _ _) = d
+getMaxEvent events = maximum $ eventPosition <$> H.toUnsortedList events
 
 checkFinished :: Simulation -> Bool
 checkFinished (H.minimum -> Event t _ _ _) = t == endTime
