@@ -7,7 +7,6 @@ import Data.Maybe (fromJust)
 import Text.Trifecta
 import Data.Aeson
 import Data.HashMap.Strict
-import Data.Text
 import Data.Monoid 
 import Data.Scientific
 
