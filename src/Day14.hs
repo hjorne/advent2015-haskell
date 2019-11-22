@@ -3,6 +3,9 @@
 module Day14 where
 
 import qualified Data.Heap as H
+import Data.Map ((!))
+import qualified Data.Map as M
+import Control.Arrow (first)
 
 type Name = String
 type Rate = Int
@@ -10,6 +13,7 @@ type Distance = Int
 type Time = Int
 type Points = Int
 type Simulation = H.Heap Event
+type DeerState = M.Map Deer (State, Distance)
 
 data Deer = Deer {
     deerName :: Name,
@@ -29,12 +33,6 @@ data EventType = StartMove
                | EndMove
                deriving (Eq, Show)
 
-data DeerState = DeerState {
-    stateDeer :: Deer,
-    statePosition :: Distance,
-    state :: State
-} deriving (Eq, Show)
-
 data State = Resting 
            | Moving
            deriving (Eq, Show)
@@ -51,7 +49,7 @@ endTime = 2503
 day14 :: IO ()
 day14 = do 
     file <- readFile infile 
-    print $ part1 file
+    -- print $ part1 file
     print $ part2 file
 
 part1 :: String -> Int
@@ -105,19 +103,34 @@ step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
 step _ = error "TODO: This should be the end of the simulation"
 
 -- part2 :: String -> Simulation
-part2 s = length $ fst $ span (\e -> eventTime e == 0) $ allEvents deers
+part2 s = takegs
     where deers = parseDeers s
+          events = allEvents deers
+          initial = (0, initDeerState deers, events)
+          all = iterate stepSecond initial
 
-stepSecond :: Time -> [DeerState] -> [Event] -> 
+checkStep :: (Time, a, b) -> Bool
+checkStep (t, _, _ ) = t == endTime
+
+stepSecond :: (Time, DeerState, [Event]) -> (Time, DeerState, [Event])
+stepSecond (t, state, event) = (t + 1, state', future)
+    where (process, future) = span ((==t) . eventTime) event
+          state' = M.mapWithKey moveSecond $ processEvents state process
+
+processEvents :: DeerState -> [Event] -> DeerState
+processEvents = foldr processEvent 
+
+processEvent :: Event -> DeerState -> DeerState
+processEvent (Event _ _ d StartMove) = M.adjust (first (const Moving)) d 
+processEvent (Event _ _ d EndMove) = M.adjust (first (const Resting)) d
 
 allEvents :: [Deer] -> [Event]
 allEvents = fmap H.minimum . takeWhile (not . checkFinished) . iterate step . initSim
 
-initDeerState :: [Deer] -> [DeerState]
-initDeerState = fmap mkState
-    where mkState deer = DeerState deer 0 Moving
+initDeerState :: [Deer] -> DeerState
+initDeerState = M.fromList . fmap mkState
+    where mkState deer = (deer, (Moving, 0))
 
-moveState :: DeerState -> DeerState
-moveState dstate@(DeerState _ _ Resting) = dstate
-moveState (DeerState deer pos Moving) = DeerState deer (pos + rate) Moving
-    where rate = deerRate deer
+moveSecond :: Deer -> (State, Distance) -> (State, Distance)
+moveSecond _ (Resting, r) = (Resting, r)
+moveSecond d (Moving, r) = (Moving, deerRate d + r)
