@@ -1,5 +1,4 @@
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -Wall #-}
 
 module Day14 where
 
@@ -106,10 +105,13 @@ step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
 step _ = error "TODO: This should be the end of the simulation"
 
 -- part2 :: String -> Simulation
-part2 = allEvents . parseDeers
+part2 s = length $ fst $ span (\e -> eventTime e == 0) $ allEvents deers
+    where deers = parseDeers s
 
--- allEvents :: [Deer] -> [Event]
-allEvents = last . fmap H.minimum . takeWhile (not . checkFinished) . iterate step . initSim
+stepSecond :: Time -> [DeerState] -> [Event] -> 
+
+allEvents :: [Deer] -> [Event]
+allEvents = fmap H.minimum . takeWhile (not . checkFinished) . iterate step . initSim
 
 initDeerState :: [Deer] -> [DeerState]
 initDeerState = fmap mkState
