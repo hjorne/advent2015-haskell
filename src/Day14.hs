@@ -3,8 +3,8 @@
 module Day14 where
 
 import qualified Data.Heap as H
-import Data.Map ((!))
 import qualified Data.Map as M
+import Data.Map ((!))
 import Control.Arrow (first)
 
 type Name = String
@@ -44,7 +44,7 @@ infile :: String
 infile = "input/day14.txt"
 
 endTime :: Int
-endTime = 2503
+endTime = 4
 
 day14 :: IO ()
 day14 = do 
@@ -102,15 +102,25 @@ step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
     where newEvent = move event
 step _ = error "TODO: This should be the end of the simulation"
 
--- part2 :: String -> Simulation
-part2 s = takegs
+-- part2 :: String -> Points
+-- part2 s = maximum . M.elems . foldl winningDeer M.empty . takeWhile (not . checkStep) $ iterate stepSecond initial
+part2 s = head . tail . takeWhile (not . checkStep) $ iterate stepSecond initial
     where deers = parseDeers s
           events = allEvents deers
           initial = (0, initDeerState deers, events)
-          all = iterate stepSecond initial
 
+winningDeer ::  M.Map Deer Points -> (a, DeerState, b) -> M.Map Deer Points
+winningDeer m (_, ds, _) = foldr go m allDeers
+    where maxR = maximum $ snd <$> M.elems ds
+          allDeers = M.keys . M.filter ((==) maxR . snd) $ ds
+          go k = M.insertWith (+) k 1
+
+getFurthestDeer :: DeerState -> Deer
+getFurthestDeer ds = fst $ M.foldrWithKey go (head . M.keys $ ds, 0) ds
+    where go d (_, r) (md, mr) | r > mr = (d, r)
+                               | otherwise = (md, mr)
 checkStep :: (Time, a, b) -> Bool
-checkStep (t, _, _ ) = t == endTime
+checkStep (t, _, _) = t > endTime
 
 stepSecond :: (Time, DeerState, [Event]) -> (Time, DeerState, [Event])
 stepSecond (t, state, event) = (t + 1, state', future)
@@ -133,4 +143,4 @@ initDeerState = M.fromList . fmap mkState
 
 moveSecond :: Deer -> (State, Distance) -> (State, Distance)
 moveSecond _ (Resting, r) = (Resting, r)
-moveSecond d (Moving, r) = (Moving, deerRate d + r)
+moveSecond d (Moving , r) = (Moving, deerRate d + r)
