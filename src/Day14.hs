@@ -44,12 +44,12 @@ infile :: String
 infile = "input/day14.txt"
 
 endTime :: Int
-endTime = 4
+endTime = 2503
 
 day14 :: IO ()
 day14 = do
     file <- readFile infile
-    -- print $ part1 file
+    print $ part1 file
     print $ part2 file
 
 part1 :: String -> Int
@@ -100,9 +100,8 @@ step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
     where newEvent = move event
 step _ = error "TODO: This should be the end of the simulation"
 
--- part2 :: String -> Points
---part2 s = maximum . M.elems . foldl winningDeer M.empty . takeWhile (not . checkStep) $ iterate stepSecond initial
-part2 s = last . takeWhile (not . checkStep) $ iterate stepSecond initial
+part2 :: String -> Points
+part2 s = flip (-) 1 . maximum . M.elems . foldl winningDeer M.empty . takeWhile (not . checkStep) $ iterate stepSecond initial 
   where
     deers   = parseDeers s
     events  = allEvents deers
@@ -113,13 +112,14 @@ winningDeer m (_, ds, _) = foldr go m allDeers
   where
     maxR     = maximum $ snd <$> M.elems ds
     allDeers = M.keys . M.filter ((==) maxR . snd) $ ds
-    go k = M.insertWith (+) k 1
+    go k     = M.insertWith (+) k 1
 
 getFurthestDeer :: DeerState -> Deer
 getFurthestDeer ds = fst $ M.foldrWithKey go (head . M.keys $ ds, 0) ds
   where
     go d (_, r) (md, mr) | r > mr    = (d, r)
                          | otherwise = (md, mr)
+
 checkStep :: (Time, a, b) -> Bool
 checkStep (t, _, _) = t > endTime
 
