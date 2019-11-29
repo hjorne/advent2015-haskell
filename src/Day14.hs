@@ -101,7 +101,13 @@ step (H.uncons -> Just (event, sim)) = H.insert newEvent sim
 step _ = error "TODO: This should be the end of the simulation"
 
 part2 :: String -> Points
-part2 s = flip (-) 1 . maximum . M.elems . foldl winningDeer M.empty . takeWhile (not . checkStep) $ iterate stepSecond initial 
+part2 s =
+    flip (-) 1
+        . maximum
+        . M.elems
+        . foldl winningDeer M.empty
+        . takeWhile (not . checkStep)
+        $ iterate stepSecond initial
   where
     deers   = parseDeers s
     events  = allEvents deers
