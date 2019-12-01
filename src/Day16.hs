@@ -35,6 +35,4 @@ part1 trueSue (unzip -> (is, sues)) =
 
 sueDiff :: Sue -> Sue -> Sue
 sueDiff = M.intersectionWith (-) 
-
-checkSue :: Sue -> Bool
 checkSue = all (==0) . M.elems 
