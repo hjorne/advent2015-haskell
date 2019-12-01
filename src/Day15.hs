@@ -1,4 +1,4 @@
-module Day15 where
+module Day15 (day15) where
 
 import           Prelude                 hiding ( lines )
 import           Text.Trifecta           hiding ( dot )
@@ -14,7 +14,6 @@ day15 :: IO ()
 day15 = parseFromFile file infile >>= \ingredients ->
     print (part1 <$> ingredients) >> print (part2 <$> ingredients)
 
-file :: Parser [[Integer]]
 file = some lines
 lines =
     fmap reverse $ some letter *> string ": " *> ingredient `sepBy` string ", "

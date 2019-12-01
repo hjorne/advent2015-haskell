@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 22adab79159b53debaeff259dcce2b20ae50408512f1e1fbc834394255f84bb9
+-- hash: 5d317ca13872f28c27b675cd21506bd20dba2d8f5bb592ae210c11803ff99415
 
 name:           advent2015
 version:        0.1.0.0
@@ -35,6 +35,8 @@ library
       Day13
       Day14
       Day15
+      Day16
+      Day17
       Day2
       Day3
       Day4

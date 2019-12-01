@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns #-}
 
-module Day14 () where
+module Day14 (day14) where
 
 import qualified Data.Heap                     as H
 import qualified Data.Map                      as M

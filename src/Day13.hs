@@ -1,6 +1,6 @@
 {-# LANGUAGE TupleSections #-}
 
-module Day13 where
+module Day13 (day13) where
 
 import           Prelude                 hiding ( lines )
 import qualified Data.Map                      as M
