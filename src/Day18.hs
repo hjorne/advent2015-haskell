@@ -7,30 +7,39 @@ import           Data.Foldable                  ( traverse_
                                                 )
 import           Data.Ix                        ( range )
 import           Control.Monad.ST
+import           Data.Array.ST
+import           Data.Array.IArray              ( (!)
+                                                , (//)
+                                                )
 import qualified Data.Array.MArray             as MA
-import qualified Data.Array.ST                 as A
 import qualified Data.Array.Unboxed            as UA
-import Debug.Trace
+import qualified Data.Array.IArray             as IA
 
-type R = (Int, Int)
-type MArray s = A.STUArray s R Bool
+type Z2 = (Int, Int)
+type Board = UA.UArray Z2 Bool
+type MutableBoard s = STUArray s Z2 Bool
 
 infile :: String
-infile = "input/day18.txt"
+--infile = "input/day18.txt"
+infile = "input/day18-test.txt"
 
 n :: Int
 n = 1
 
 day18 :: IO ()
-day18 = readFile infile >>= print . part1 . parse
+day18 = readFile infile >>= \contents ->
+    print (part1 . parse $ contents) >> print (part2 . parse $ contents)
 
-parse :: String -> [[Bool]]
-parse = fmap toBinary . words
+parse :: String -> Board
+parse = toBoard . fmap toBinary . words
 
-part1 :: [[Bool]] -> Int
-part1 bss = count $ run bss n
+part1 :: Board -> Int
+part1 = count . run 
 
-dims :: [[a]] -> (R, R)
+part2 :: Board -> Int
+part2 = count . runSet
+
+dims :: [[a]] -> (Z2, Z2)
 dims xss@(xs : _) = ((0, 0), (length xs - 1, length xss - 1))
 
 toBinary :: String -> [Bool]
@@ -41,32 +50,44 @@ toBinaryC '.' = False
 toBinaryC '#' = True
 toBinaryC _   = error "Unknown character"
 
-toArray :: [[Bool]] -> ST s (MArray s)
-toArray bss = MA.newListArray (dims bss) (concat bss)
+toBoard :: [[Bool]] -> Board
+toBoard bss = IA.listArray (dims bss) (concat bss)
 
-count :: UA.UArray R Bool -> Int
-count = length . filter id . UA.elems 
+count :: Board -> Int
+count = length . filter id . IA.elems
 
-run :: [[Bool]] -> Int -> UA.UArray R Bool
-run bss n = A.runSTUArray $ toArray bss >>= \arr ->
-    for_ [1 .. n] (const $ step arr) >> return arr
+run :: Board -> Board
+run board = iterate step board !! n
 
-step :: MArray s -> ST s ()
-step arr = MA.getBounds arr >>= \bounds -> traverse_ (stepR arr) (range bounds)
+runSet :: Board -> Board
+runSet board = iterate stepSet board !! n
 
-stepR :: MArray s -> R -> ST s ()
-stepR arr (x, y) = MA.getBounds arr >>= \(_, (xmax, ymax)) ->
-    MA.readArray arr (x, y) >>= \value ->
-        traverse (MA.readArray arr) (neighborR xmax ymax) >>= \neighbors ->
-            MA.writeArray arr (x, y) (runState value neighbors)
+stepSet :: Board -> Board
+stepSet arr = runSTUArray $ MA.thaw arr >>= \mutarr ->
+    setCornersMut mutarr
+        >> traverse_ (stepR arr mutarr) indices
+        >> setCornersMut mutarr
+        >> return mutarr
+    where indices = range (IA.bounds arr)
+
+step :: Board -> Board
+step arr = runSTUArray $ MA.thaw arr >>= \mutarr ->
+    traverse_ (stepR arr mutarr) indices >> return mutarr
+    where indices = range (IA.bounds arr)
+
+stepR :: Board -> MutableBoard s -> Z2 -> ST s ()
+stepR arr mutarr r@(x, y) = 
+    MA.writeArray mutarr r (runState (arr ! r) neighbors)
   where
-    neighborR xmax ymax =
+    ((xmin, ymin), (xmax, ymax)) = IA.bounds arr
+    neighbors = (arr !) <$> neighborR
+    neighborR =
         [ (x + dx, y + dy)
         | dx <- [-1 .. 1]
         , dy <- [-1 .. 1]
-        , abs dx + abs dy == 1
-        , x + dx >= 0
-        , y + dy >= 0
+        , abs dx + abs dy /= 0
+        , x + dx >= xmin
+        , y + dy >= ymin
         , x + dx <= xmax
         , y + dy <= ymax
         ]
@@ -75,5 +96,13 @@ runState :: Bool -> [Bool] -> Bool
 runState v neighbors | v && (n == 2 || n == 3) = True
                      | v                       = False
                      | not v && n == 3         = True
-                     | otherwise               = False
+                     | not v                   = False
     where n = length . filter id $ neighbors
+
+setCornersMut :: MutableBoard s -> ST s ()
+setCornersMut mutarr =
+    MA.getBounds mutarr >>= \((xmin, ymin), (xmax, ymax)) ->
+        MA.writeArray mutarr (xmin, ymin) True
+            >> MA.writeArray mutarr (xmin, ymax) True
+            >> MA.writeArray mutarr (xmax, ymin) True
+            >> MA.writeArray mutarr (xmax, ymax) True
