@@ -4,9 +4,8 @@ module Day16 where
 
 import           Prelude                 hiding ( lines )
 import           Text.Trifecta
-import Data.Map ((!))
+import           Data.Map                       ( (!) )
 import qualified Data.Map                      as M
-import Debug.Trace
 
 type Sue = M.Map String Integer
 
